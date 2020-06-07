@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+
+	<include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+    	<arg name="map_file" value="/home/guoqing/mymap/housemap.pgm.yaml" />
+  	</include>
+
+	<node name ="init_pose" pkg="advanced_navi" type="init_pose" output="screen"/>
+
+</launch> 

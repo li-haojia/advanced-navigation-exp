@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+
+	<node name="sequence_goal" pkg="advanced_navi" type="sequence_goal" output="screen"
+          args="$(find advanced_navi)/data/landmarks.txt" 
+    />
+
+</launch> 

@@ -13,4 +13,5 @@
 	<!-- 添加启动 init_pose 的标签, 节点名称为 init_pose -->
 	<node pkg="advanced_navi" type="init_pose" name="init_pose" output="screen"/>
 	<node pkg="advanced_navi" type="set_goal" name="set_goal" output="screen" launch-prefix="gnome-terminal -e"/>
+	<!-- <node pkg="advanced_navi" type="sequence_goal" name="sequence_goal" output="screen" launch-prefix="gnome-terminal -e"/> -->
 </launch> 

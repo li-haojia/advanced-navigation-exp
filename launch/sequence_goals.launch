@@ -1,11 +1,17 @@
 <?xml version="1.0"?>
 <launch>
 
-    <!-- TODO 补全 -->
-    <!-- 
-        <node ___________________ output="screen"
-            ___________________
-        /> 
-    -->
+	<!-- 同学们注意, 这个是 xml 文件的注释格式, 不要打错 -->
+	<include file="$(find turtlebot3_gazebo)/launch/turtlebot3_house.launch"/>
+	<!-- 用于包含正常启动导航 launch -->
+	<include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+		<!-- 设置该 launch 文件的参数 -->
+		<!-- 我改到launch文件里了 -->
+    	<!-- <arg name="map_file" value="/home/guoqing/mymap/housemap.pgm.yaml" /> -->
+  	</include>
 
+	<!-- 添加启动 init_pose 的标签, 节点名称为 init_pose -->
+	<node pkg="advanced_navi" type="init_pose" name="init_pose" output="screen"/>
+	<!-- <node pkg="advanced_navi" type="set_goal" name="set_goal" output="screen" launch-prefix="gnome-terminal -e"/> -->
+	<node pkg="advanced_navi" type="sequence_goal" name="sequence_goal" launch-prefix="xterm -e" args="/media/derek/7C88659288654BA8/study/ROS/ws/src/advanced_navigation/data/landmarks.txt" output="screen"/>
 </launch> 

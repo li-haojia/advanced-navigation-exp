@@ -1,10 +1,15 @@
 <?xml version="1.0"?>
 <launch>
 
+	<!-- 同学们注意, 这个是 xml 文件的注释格式, 不要打错 -->
+
+	<!-- 用于包含正常启动导航 launch -->
 	<include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+		<!-- 设置该 launch 文件的参数 -->
     	<arg name="map_file" value="/home/guoqing/mymap/housemap.pgm.yaml" />
   	</include>
 
-	<node name ="init_pose" pkg="advanced_navi" type="init_pose" output="screen"/>
+	<!-- 添加启动 init_pose 的标签, 节点名称为 init_pose -->
+	<!-- <node _______________ output="screen"/> -->
 
 </launch> 

@@ -8,157 +8,222 @@
  * @copyright Copyright (c) 2020
  * 
  */
-#include <ros/ros.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <move_base_msgs/MoveBaseActionGoal.h>
-#include <std_srvs/Empty.h>
-// #include <sensor_msgs/LaserScan.h>
-// TODO fill cmakelists.txt and package.yml
-#include <gazebo_msgs/GetModelState.h>
 
+/* ========================================== 头文件 ===========================================
+   实验中用到的库在 CMakeLists.txt 和 package.xml 中已进行了相关设置, 同学们直接用就行
+   ============================================================================================ */
+
+// C++ STL
 #include <string>
 #include <sstream>
 #include <iostream>
+// ROS
+#include <ros/ros.h>
 
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+// TODO 2.2.2 补全头文件
+// #include <std_srvs/_____>
+// TODO 2.2.3 补全头文件
+// #include <___________________>
+
+
+// ROS节点基类实现
 #include "ExperNodeBase.hpp"
 
-// TODO 
-#define MACRO_INIT_POSE_TOPIC "/initialpose"
-#define MACRO_CLEAR_COST_MAP_SRV "/move_base/clear_costmaps"
-#define MACRO_GAZEBO_MODEL_STATE_SRV "/gazebo/get_model_state"
+/* ========================================== 宏定义 ===========================================
+   用到的 topic 和 service 名称均以宏定义的方式写在程序中
+   ============================================================================================ */
+#define MACRO_INIT_POSE_TOPIC           "/initialpose"                      // 发送初始位姿的 topic
+#define MACRO_CLEAR_COST_MAP_SRV        "/move_base/clear_costmaps"         // 清除 Costmap 的 service
+#define MACRO_GAZEBO_MODEL_STATE_SRV    "/gazebo/get_model_state"           // 获取机器人初始位姿的 topic
 
+#define CONST_PI                        3.141592654f;                       // 圆周率 pi
 
+/* ========================================== 程序正文 =========================================== */
+
+/** @brief 初始化机器人位姿的节点类型 */
 class InitPoseNode : public ExperNodeBase
 {
 public:
+    /**
+     * @brief 构造函数
+     * @param[in] nArgc         命令行参数个数
+     * @param[in] ppcArgv       命令行参数表列
+     * @param[in] pcNodeName    当前节点运行时的名字
+     */
     InitPoseNode(int nArgc, char** ppcArgv, const char* pcNodeName)
         : ExperNodeBase(nArgc, ppcArgv, pcNodeName)
     {
-        mPubInitPose  = mupNodeHandle->advertise<geometry_msgs::PoseWithCovarianceStamped>(MACRO_INIT_POSE_TOPIC, 1);
+        // TODO 2.2.1 初始化发布器
+        // mPubInitPose  = mupNodeHandle->advertise<____>(MACRO_INIT_POSE_TOPIC, 1);
 
-        mClientClrMap = mupNodeHandle->serviceClient<std_srvs::Empty>(MACRO_CLEAR_COST_MAP_SRV);
+        // TODO 2.2.2 初始化服务客户端
+        // ___________ = ______________->serviceClient<__________>(MACRO_CLEAR_COST_MAP_SRV);
 
-        mClientGzbPose = mupNodeHandle->serviceClient<gazebo_msgs::GetModelState>(MACRO_GAZEBO_MODEL_STATE_SRV);
+        // TODO 2.2.3 gazebo获取机器人位姿的服务客户端
+        //  mClientGzbPose = ____________________________________________(MACRO_GAZEBO_MODEL_STATE_SRV);
         
         // 确保初始化完成
         ros::Duration(0.1).sleep();
     }
 
+    /** @brief 析构函数 */
     ~InitPoseNode(){};
 
-    InitPoseNode(InitPoseNode& node) = delete;
-    InitPoseNode(const InitPoseNode& node) = delete;
-
+    /** @brief 主循环, override 表示当前函数强制覆写基类的同名虚函数 */
     void Run(void) override
     {
-        mSrvGzbModelState.request.model_name = "turtlebot3";
-        mSrvGzbModelState.request.relative_entity_name = "";
-
-        // 等待, 直到准备好
-        while(mClientGzbPose.exists() == false)
+        // TODO 2.2.3 
+        // Step 1 从 Gazebo 获取机器人初始位置
+        /*
         {
-            ros::Duration(0.1).sleep();
+            // Step 1.1  初始化请求
+            // 这里的名称通过查看 Gazebo 得到
+            mSrvGzbModelState.request.model_name = "turtlebot3";        
+            mSrvGzbModelState.request.relative_entity_name = "";
+
+            // Step 1.2 等待 gazebo 服务准备就绪
+            // TODO 2.2.4
+            // while(______)
+            // {
+            //     ros::Duration(0.1).sleep();
+            // }
+
+            // Step 1.3 调用 Gazebo 服务
+            // NOTICE 下面的程序写法不唯一, 实现功能即可
+            while(_______)
+            {
+                ROS_ERROR("Get init pose failed. Retry after 2 seconds ...");
+                ros::Duration(2).sleep();
+            }
+           
+            // 输出得到的机器人初始位姿
+            _______;
+        }
+        */
+
+        // Step 2 设置机器人的初始位姿
+        {
+            // Step 2.1 设置消息
+            SetInitPoseMsg();
+
+            // Step 2.2 等待 topic 具有订阅者
+            // TODO 2.2.4
+            /*
+            while(________)
+            {
+                <YOUR CODE>
+            }
+            */
+            
+            // TODO 2.2.1 发布机器人初始位姿
+            // _________.________(_______);
+            ROS_INFO("Initilize pose OK.");
         }
 
-        if(mClientGzbPose.call(mSrvGzbModelState))
+        // Step 3 清除 Costmap
         {
-            auto& msgPostion = mSrvGzbModelState.response.pose.position;
-            auto& msgQuat    = mSrvGzbModelState.response.pose.orientation;
-            ROS_INFO_STREAM("==> position: [" << msgPostion.x << ", " << msgPostion.y << ", " << msgPostion.z << "]");
-            ROS_INFO_STREAM("==> quat: [" << msgQuat.x << ", " << msgQuat.y << ", " << msgQuat.z << ", " << msgQuat.w << "]");
-        }
-        else
-        {
-            ROS_ERROR("mClientGzbPose.call failed.");
-        }
-
-        // 设置初始的位姿
-        SetInitPoseMsg();
-
-
-        // size_t nWaitSeconds = 40;
-        // for(size_t nSecs = 0; nSecs < nWaitSeconds; ++nSecs)
-        // {
-        //     ROS_INFO_STREAM("Waiting " << nSecs << "/" << nWaitSeconds << "seconds for rviz ready, subscribers: " << mPubInitPose.getNumSubscribers());
-        //     ros::Duration(1).sleep();
-        // }
-
-        while(ros::ok() && (mPubInitPose.getNumSubscribers() == 0 || mClientClrMap.exists() == false))
-        {
-            // TODO 添加对服务有效性的判断
-            static size_t nCntSeconds = 0;
-            // 如果还没有订阅者, 那么等等
-            // TODO 修改输出内容
-            ROS_INFO_STREAM("Waiting for " << nCntSeconds++ << " seconds for rviz ready, subscribers: " << mPubInitPose.getNumSubscribers());
-            ros::Duration(1).sleep();
-        }
-
-        mPubInitPose.publish(mMsgInitPos);
-        ROS_INFO("Initilize pose OK.");
-
-        // 延时, 否则会出现清除失效的情况
-        ros::Duration(2).sleep();
-        while(!mClientClrMap.call(mSrvClrMap))
-        {
-            ROS_ERROR("Clear cost map failed. Retry after 2 seconds ...");
+            // Step 3.1 延时, 否则会出现清除失效的情况
             ros::Duration(2).sleep();
+            
+            // Step 3.2 等待服务有效
+            // TODO 2.2.4
+            // <YOUR CODE>
+
+            // Step 3.3 清除地图
+            // TODO 2.2.2 调用服务
+            // while(!______)
+            {
+                ROS_ERROR("Clear costmap failed. Retry after 2 seconds ...");
+                ros::Duration(2).sleep();
+            }
+            ROS_INFO("Costmap cleared!");
         }
-        ROS_INFO("Cost map cleared!");
     }
 
 private:
 
     void SetInitPoseMsg(void)
     {
-        ros::Time timeStamp = ros::Time::now();
-
+        // 方便程序编写, 毕竟后面这坨名字实在太长了; 类型名长? 记不住? auto 就完了
         auto& msgHeader = mMsgInitPos.header;
-        // auto& msgPt     = mMsgInitPos.pose.pose.position;
-        // auto& msgQt     = mMsgInitPos.pose.pose.orientation;
+        auto& msgPt     = mMsgInitPos.pose.pose.position;
+        auto& msgQt     = mMsgInitPos.pose.pose.orientation;
         auto& msgCov    = mMsgInitPos.pose.covariance;
 
-        // 注意这个并不需要我们设置
-        // msgHeader.seq = 0;
-        msgHeader.stamp.sec = timeStamp.sec;
-        msgHeader.stamp.nsec = timeStamp.nsec;
-        msgHeader.frame_id = "map";
+        // Step 1 设置消息头
+        msgHeader.stamp         = ros::Time::now();
+        // 以 map 为世界坐标系, 这里的机器人位姿也是在 map 坐标系下表示的
+        msgHeader.frame_id      = "map";                
 
-        mMsgInitPos.pose.pose.position    = mSrvGzbModelState.response.pose.position;
-        mMsgInitPos.pose.pose.orientation = mSrvGzbModelState.response.pose.orientation;
-        
-        // msgPt.x = -3.0f;
-        // msgPt.y = 1.0f;
-        // msgPt.z = 0.0f;
+        // Step 2 设置机器人初始位姿
 
-        // msgQt.x = 0.0f;
-        // msgQt.y = 0.0f;
-        // msgQt.z = 0.0f;
-        // msgQt.w = 1.0f;
+        /* TODO 2.2.1 数格子获得坐标点
+        msgPt.x = ____;
+        msgPt.y = ____;
+        msgPt.z = ____;
 
+        Heading2Quat(____, _____);
+        */
+
+        /* TODO 2.2.3 利用 Gazebo 得到的位姿数据, 修改时注意将上面 2.2.1 修改的内容注释掉
+        msgPt = ___;
+        msgQt = ___;
+        */ 
+
+        // Step 3 协方差矩阵
+        // 这个协方差矩阵决定了初始时刻粒子的分布. 可以设置成全0矩阵, 也可以参考 rviz 中捕获的数据设置
+        // 表示位姿的不确定度
         // pt.x            pt.y               pt.z               axis.x             axis.y              axis.z                  
-        msgCov[ 0] = 0.0f; msgCov[ 6] = 0.0f; msgCov[12] = 0.0f; msgCov[18] = 0.0f; msgCov[24] = 0.0f; msgCov[30] = 0.0f;   // pt.x
-        msgCov[ 1] = 0.0f; msgCov[ 7] = 0.0f; msgCov[13] = 0.0f; msgCov[19] = 0.0f; msgCov[25] = 0.0f; msgCov[31] = 0.0f;   // pt.y
-        msgCov[ 2] = 0.0f; msgCov[ 8] = 0.0f; msgCov[14] = 0.0f; msgCov[20] = 0.0f; msgCov[26] = 0.0f; msgCov[32] = 0.0f;   // pt.z
-        msgCov[ 3] = 0.0f; msgCov[ 9] = 0.0f; msgCov[15] = 0.0f; msgCov[21] = 0.0f; msgCov[27] = 0.0f; msgCov[33] = 0.0f;   // axis.x
-        msgCov[ 4] = 0.0f; msgCov[10] = 0.0f; msgCov[16] = 0.0f; msgCov[22] = 0.0f; msgCov[28] = 0.0f; msgCov[34] = 0.0f;   // axis.y
-        msgCov[ 5] = 0.0f; msgCov[11] = 0.0f; msgCov[17] = 0.0f; msgCov[23] = 0.0f; msgCov[29] = 0.0f; msgCov[35] = 0.0f;   // axis.z
+        msgCov[ 0] = 0.00f; msgCov[ 6] = 0.00f; msgCov[12] = 0.00f; msgCov[18] = 0.00f; msgCov[24] = 0.00f; msgCov[30] = 0.00f;   // pt.x
+        msgCov[ 1] = 0.00f; msgCov[ 7] = 0.00f; msgCov[13] = 0.00f; msgCov[19] = 0.00f; msgCov[25] = 0.00f; msgCov[31] = 0.00f;   // pt.y
+        msgCov[ 2] = 0.00f; msgCov[ 8] = 0.00f; msgCov[14] = 0.00f; msgCov[20] = 0.00f; msgCov[26] = 0.00f; msgCov[32] = 0.00f;   // pt.z
+        msgCov[ 3] = 0.00f; msgCov[ 9] = 0.00f; msgCov[15] = 0.00f; msgCov[21] = 0.00f; msgCov[27] = 0.00f; msgCov[33] = 0.00f;   // axis.x
+        msgCov[ 4] = 0.00f; msgCov[10] = 0.00f; msgCov[16] = 0.00f; msgCov[22] = 0.00f; msgCov[28] = 0.00f; msgCov[34] = 0.00f;   // axis.y
+        msgCov[ 5] = 0.00f; msgCov[11] = 0.00f; msgCov[17] = 0.00f; msgCov[23] = 0.00f; msgCov[29] = 0.00f; msgCov[35] = 0.00f;   // axis.z
+    }
+
+    /**
+     * @brief 计算偏航到四元数的转换
+     * @param[in]  dYawDeg  偏航角, 角度表示
+     * @param[out] quat     转换后的四元数
+     */
+    void Heading2Quat(double dYawDeg, geometry_msgs::Quaternion& quat)
+    {
+        // 实现偏航向四元数的换算
+        double dFaiDiv2_rad = 0.5f * dYawDeg / CONST_PI;
+        quat.x = 0.0f;
+        quat.y = 0.0f;
+        quat.z = sin(dFaiDiv2_rad);
+        quat.w = cos(dFaiDiv2_rad);
     }
        
 private:
-    ros::Publisher                            mPubInitPose;
 
-    ros::ServiceClient                        mClientGzbPose;
-    ros::ServiceClient                        mClientClrMap;
+    ros::Publisher                            mPubInitPose;             ///< 发布器, 负责发布机器人初始位姿
 
-    
-    geometry_msgs::PoseWithCovarianceStamped  mMsgInitPos;
-    std_srvs::Empty                           mSrvClrMap;
-    gazebo_msgs::GetModelState                mSrvGzbModelState;
+    ros::ServiceClient                        mClientClrMap;            ///< 服务客户端, 调用清除 costmap 的服务
+    ros::ServiceClient                        mClientGzbPose;           ///< 服务客户端, 获取 gazebo 中机器人的初始位姿
+
+    geometry_msgs::PoseWithCovarianceStamped  mMsgInitPos;              ///< 机器人初始位姿消息
+
+    std_srvs::Empty                           mSrvClrMap;               ///< 清除 Costmap 使用的服务类型
+
+    // TODO 2.2.3
+    // _________________________              mSrvGzbModelState;        ///< 得到的 Gzb 中机器人状态的服务类型
 };
 
+/**
+ * @brief 主函数
+ * @param[in] argc 命令行参数个数
+ * @param[in] argv 命令行参数表列
+ * @return int     执行返回码
+ */
 int main(int argc, char **argv)
 {
-    InitPoseNode node(argc, argv, "init_pose");
+    // 生成 ROS 节点对象
+    InitPoseNode node(arc, argv, "init_pose");
+    // 运行
     node.Run();
     return 0;
 }

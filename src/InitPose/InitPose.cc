@@ -24,7 +24,7 @@
 // 2.2.2 补全头文件
 #include <std_srvs/Empty.h>
 // 2.2.3 补全头文件
-// #include <___________________>
+#include <gazebo_msgs/GetModelState.h>
 
 
 // ROS节点基类实现
@@ -61,8 +61,8 @@ public:
         mClientClrMap=mupNodeHandle->serviceClient<std_srvs::Empty>(MACRO_CLEAR_COST_MAP_SRV);
         // ___________ = ______________->serviceClient<__________>(MACRO_CLEAR_COST_MAP_SRV);
 
-        // TODO 2.2.3 gazebo获取机器人位姿的服务客户端
-        //  mClientGzbPose = ____________________________________________(MACRO_GAZEBO_MODEL_STATE_SRV);
+        //  2.2.3 gazebo获取机器人位姿的服务客户端
+          mClientGzbPose = mupNodeHandle->serviceClient<gazebo_msgs::GetModelState> (MACRO_GAZEBO_MODEL_STATE_SRV);
         
         // 确保初始化完成
         ros::Duration(0.1).sleep();
@@ -76,7 +76,8 @@ public:
     {
         // TODO 2.2.3 
         // Step 1 从 Gazebo 获取机器人初始位置
-        /*
+        bool bSrvExistence = false;
+        
         {
             // Step 1.1  初始化请求
             // 这里的名称通过查看 Gazebo 得到
@@ -85,28 +86,33 @@ public:
 
             // Step 1.2 等待 gazebo 服务准备就绪
             // TODO 2.2.4
-            // while(______)
-            // {
-            //     ros::Duration(0.1).sleep();
-            // }
+             /*while(mClientGzbPose.)
+             {
+                 ros::Duration(0.1).sleep();
+             }*/
+             //等待一分钟
+             if(mClientGzbPose.waitForExistence(ros::Duration(60)))
+             {
+                
+                // Step 1.3 调用 Gazebo 服务
+                // NOTICE 下面的程序写法不唯一, 实现功能即可
+                while(!mClientGzbPose.call(mSrvGzbModelState))
+                {
+                    ROS_ERROR("Get init pose failed. Retry after 2 seconds ...");
+                    ros::Duration(2).sleep();
+                }
+                bSrvExistence=true;
+                
+             }
 
-            // Step 1.3 调用 Gazebo 服务
-            // NOTICE 下面的程序写法不唯一, 实现功能即可
-            while(_______)
-            {
-                ROS_ERROR("Get init pose failed. Retry after 2 seconds ...");
-                ros::Duration(2).sleep();
-            }
-           
             // 输出得到的机器人初始位姿
-            _______;
         }
-        */
+        
 
         // Step 2 设置机器人的初始位姿
         {
             // Step 2.1 设置消息
-            SetInitPoseMsg();
+            SetInitPoseMsg(bSrvExistence,mSrvGzbModelState.response.pose);
 
             // Step 2.2 等待 topic 具有订阅者
             
@@ -144,7 +150,7 @@ public:
 
 private:
 
-    void SetInitPoseMsg(void)
+    void SetInitPoseMsg(bool bSrvExistence, geometry_msgs::Pose msgP)
     {
         // 方便程序编写, 毕竟后面这坨名字实在太长了; 类型名长? 记不住? auto 就完了 
         // review: auto可还行 hhhhhh
@@ -161,17 +167,20 @@ private:
         // Step 2 设置机器人初始位姿
 
         //  2.2.1 数格子获得坐标点
-        msgPt.x = -3;
-        msgPt.y = 1;
-        msgPt.z = 0;
+        if(bSrvExistence==false)
+        {
+            msgPt.x = -3;
+            msgPt.y = 1;
+            msgPt.z = 0;
 
-        Heading2Quat(0, msgQt);
-        
-
-        /* TODO 2.2.3 利用 Gazebo 得到的位姿数据, 修改时注意将上面 2.2.1 修改的内容注释掉
-        msgPt = ___;
-        msgQt = ___;
-        */ 
+            Heading2Quat(0, msgQt);
+        }
+        else
+        {
+            //2.2.3 利用 Gazebo 得到的位姿数据,
+            msgPt=msgP.position;
+            msgQt=msgP.orientation;
+        }
 
         // Step 3 协方差矩阵
         // 这个协方差矩阵决定了初始时刻粒子的分布. 可以设置成全0矩阵, 也可以参考 rviz 中捕获的数据设置
@@ -212,7 +221,7 @@ private:
     std_srvs::Empty                           mSrvClrMap;               ///< 清除 Costmap 使用的服务类型
 
     // TODO 2.2.3
-    // _________________________              mSrvGzbModelState;        ///< 得到的 Gzb 中机器人状态的服务类型
+     gazebo_msgs::GetModelState             mSrvGzbModelState;        ///< 得到的 Gzb 中机器人状态的服务类型
 };
 
 /**

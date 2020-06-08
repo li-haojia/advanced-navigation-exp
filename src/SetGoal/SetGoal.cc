@@ -18,10 +18,11 @@
 #include <ros/ros.h>
 // TODO 补充消息头文件
 // #include <____>
-// ...
+#include "move_base_msgs/MoveBaseActionGoal.h"
 
 // 节点基类
 #include "ExperNodeBase.hpp"
+#include "csignal"
 
 /* ========================================== 宏定义 =========================================== */
 #define MACRO_GOAL_POSE_TOPIC   "/move_base/goal"       // 发送导航目标点的 topic
@@ -31,6 +32,19 @@
 #define CONST_PI                3.141592654f            // 圆周率
 
 /* ========================================== 程序正文 =========================================== */
+using namespace std;
+
+/**
+ * @brief Linux 信号回调函数
+ * @details 用于接收 Ctrl+C 产生的 SIG_INT 信号, 避免 ROS 节点运行时按 Ctrl+C 无法退出的问题
+ * @param[in] nSigId 信号id
+ */
+void OnSignalInterrupt(int nSigId)
+{
+    std::cout << "Ctrl+C Pressed, program terminated." << std::endl;
+    // gbQuit = true;
+    exit(nSigId);
+}
 
 /** @brief 设置机器人导航路标点的节点 */
 class SetGoalNode : public ExperNodeBase
@@ -47,7 +61,7 @@ public:
     {
 
         // TODO 2.3.1 设置发布器
-        // mPubNextGoal = _______________(MACRO_GOAL_POSE_TOPIC, 1);
+         mPubNextGoal = mupNodeHandle->advertise<move_base_msgs::MoveBaseActionGoal>(MACRO_GOAL_POSE_TOPIC, 1);
         // TODO 2.3.2 设置导航状态订阅器. 注意回调函数是类的成员函数, 或者是类的静态函数时, 后面应该怎么写; 方式不唯一
         // mSubNavRes   = _______________(MACRO_RESULT_TOPIC, 1, _____________________);
 
@@ -61,9 +75,34 @@ public:
     /** @brief 主循环 */
     void Run(void) override
     {
-        // TODO 2.3.1 发布导航目标点
+        // 2.3.1 发布导航目标点
         // 如果需要自己添加类成员变量或成员函数, 请随意添加
-        // <YOUR CODE>
+        //等待movebase就位
+        while(mPubNextGoal.getNumSubscribers()==0)
+        {
+            ros::Duration(1).sleep();
+        }
+        ros::Duration(1).sleep();
+        while(ros::ok())
+        {
+            ROS_INFO("Welcome using SetGoal");
+            std::cout<<"Please input the traget point (x,y,yaw) like x y yaw"<<std::endl;
+            double x,y,yaw;
+            do
+            {
+                std::cin>>x>>y>>yaw;
+                if(std::cin.fail())
+                {
+                    //cout<<"Input error!"<<endl;
+                    ROS_ERROR("Input error! \n Please input the traget point (x,y,yaw) like x y yaw");
+                    std::cin.clear();
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+                }
+                else 
+                break;
+            }while(true);
+            SetCurrGoal(x,y,yaw);
+        }
 
         // TODO 2.3.2 获取导航执行结果, 并显示在屏幕上
         // <YOUR CODE>
@@ -107,14 +146,21 @@ private:
          *      - 修改坐标多发送几次呢?
          *      - 你发现 rviz 中机器人执行导航的过程的不正常情况了吗?
         */
+       ros::Time timeStamp=msgGoalID.stamp;
         std::stringstream ss;
         ss << "my_goal_" << nCnt << "_" << timeStamp.sec << "." << timeStamp.nsec;
-        msgGoalID.id = ss.str().c_str();
+        // 估计是一个hash表，重名的话只保留第一个,发出来的新的不起作用
+        msgGoalID.id = ss.str();// 估计是一个hash表，重名的话只保留第一个,发出来的新的不起作用
         ROS_DEBUG_STREAM("Goal Id: " << ss.str());
+        Heading2Quat(dYawDeg, msgQt);
+        msgPt.x=dX;
+        msgPt.y=dY;
+        msgPt.z=0;
 
         // Step 2 设置目标点
         // TODO 2.3.1 设置目标点
-        // <YOUR CODE>
+        mPubNextGoal.publish(mMsgCurrGoal);
+        nCnt++;
     }
 
     /**
@@ -135,8 +181,10 @@ private:
 private:
 
     // TODO 2.3.2 补全类型
+    move_base_msgs::MoveBaseActionGoal mMsgCurrGoal;
     ros::Publisher  mPubNextGoal;           // 路标点发布器
     ros::Subscriber mSubNavRes;             // 导航状态订阅器
+    uint32_t nCnt;
     // _______________    mMsgCurrGoal;
     
 };
@@ -153,6 +201,7 @@ int main(int argc, char **argv)
     // 生成 ROS 节点对象
     SetGoalNode node(argc, argv, "set_goal");
     // 运行
+    signal(SIGINT,OnSignalInterrupt);
     node.Run();
     return 0;
 }

@@ -22,7 +22,7 @@
 
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 // 2.2.2 补全头文件
-// #include <std_srvs/>
+#include <std_srvs/Empty.h>
 // 2.2.3 补全头文件
 // #include <___________________>
 
@@ -54,10 +54,11 @@ public:
     InitPoseNode(int nArgc, char** ppcArgv, const char* pcNodeName)
         : ExperNodeBase(nArgc, ppcArgv, pcNodeName)
     {
-        // TODO 2.2.1 初始化发布器
+        // 2.2.1 初始化发布器
         mPubInitPose  = mupNodeHandle->advertise<geometry_msgs::PoseWithCovarianceStamped>(MACRO_INIT_POSE_TOPIC, 1);
 
-        // TODO 2.2.2 初始化服务客户端
+        // 2.2.2 初始化服务客户端
+        mClientClrMap=mupNodeHandle->serviceClient<std_srvs::Empty>(MACRO_CLEAR_COST_MAP_SRV);
         // ___________ = ______________->serviceClient<__________>(MACRO_CLEAR_COST_MAP_SRV);
 
         // TODO 2.2.3 gazebo获取机器人位姿的服务客户端
@@ -113,25 +114,26 @@ public:
             {
                 ros::Duration(1,0).sleep();//1s检测一次订阅者
             }
-           
+           ros::Duration(1,0).sleep();
             
             // 2.2.1 发布机器人初始位姿
             mPubInitPose.publish(mMsgInitPos);
             ROS_INFO("Initilize pose OK.");
+            
         }
 
-        // Step 3 清除 Costmap
+         //Step 3 清除 Costmap
         {
             // Step 3.1 延时, 否则会出现清除失效的情况
             ros::Duration(2).sleep();
-            
+            //mClientClrMap=mupNodeHandle->serviceClient<std_srvs::Empty>(MACRO_CLEAR_COST_MAP_SRV);
             // Step 3.2 等待服务有效
             // TODO 2.2.4
             // <YOUR CODE>
 
             // Step 3.3 清除地图
             // TODO 2.2.2 调用服务
-            // while(!______)
+            while(!mClientClrMap.call(mSrvClrMap))
             {
                 ROS_ERROR("Clear costmap failed. Retry after 2 seconds ...");
                 ros::Duration(2).sleep();
@@ -175,12 +177,12 @@ private:
         // 这个协方差矩阵决定了初始时刻粒子的分布. 可以设置成全0矩阵, 也可以参考 rviz 中捕获的数据设置
         // 表示位姿的不确定度
         // pt.x            pt.y               pt.z               axis.x             axis.y              axis.z                  
-        msgCov[ 0] = 0.00f; msgCov[ 6] = 0.00f; msgCov[12] = 0.00f; msgCov[18] = 0.00f; msgCov[24] = 0.00f; msgCov[30] = 0.00f;   // pt.x
-        msgCov[ 1] = 0.00f; msgCov[ 7] = 0.00f; msgCov[13] = 0.00f; msgCov[19] = 0.00f; msgCov[25] = 0.00f; msgCov[31] = 0.00f;   // pt.y
+        msgCov[ 0] = 0.25f; msgCov[ 6] = 0.00f; msgCov[12] = 0.00f; msgCov[18] = 0.00f; msgCov[24] = 0.00f; msgCov[30] = 0.00f;   // pt.x
+        msgCov[ 1] = 0.00f; msgCov[ 7] = 0.25f; msgCov[13] = 0.00f; msgCov[19] = 0.00f; msgCov[25] = 0.00f; msgCov[31] = 0.00f;   // pt.y
         msgCov[ 2] = 0.00f; msgCov[ 8] = 0.00f; msgCov[14] = 0.00f; msgCov[20] = 0.00f; msgCov[26] = 0.00f; msgCov[32] = 0.00f;   // pt.z
         msgCov[ 3] = 0.00f; msgCov[ 9] = 0.00f; msgCov[15] = 0.00f; msgCov[21] = 0.00f; msgCov[27] = 0.00f; msgCov[33] = 0.00f;   // axis.x
         msgCov[ 4] = 0.00f; msgCov[10] = 0.00f; msgCov[16] = 0.00f; msgCov[22] = 0.00f; msgCov[28] = 0.00f; msgCov[34] = 0.00f;   // axis.y
-        msgCov[ 5] = 0.00f; msgCov[11] = 0.00f; msgCov[17] = 0.00f; msgCov[23] = 0.00f; msgCov[29] = 0.00f; msgCov[35] = 0.00f;   // axis.z
+        msgCov[ 5] = 0.00f; msgCov[11] = 0.00f; msgCov[17] = 0.00f; msgCov[23] = 0.00f; msgCov[29] = 0.00f; msgCov[35] = 0.068f;   // axis.z
     }
 
     /**
@@ -207,7 +209,7 @@ private:
 
     geometry_msgs::PoseWithCovarianceStamped  mMsgInitPos;              ///< 机器人初始位姿消息
 
-    //std_srvs::Empty                           mSrvClrMap;               ///< 清除 Costmap 使用的服务类型
+    std_srvs::Empty                           mSrvClrMap;               ///< 清除 Costmap 使用的服务类型
 
     // TODO 2.2.3
     // _________________________              mSrvGzbModelState;        ///< 得到的 Gzb 中机器人状态的服务类型

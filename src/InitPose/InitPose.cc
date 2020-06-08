@@ -21,9 +21,9 @@
 #include <ros/ros.h>
 
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
-// TODO 2.2.2 补全头文件
-// #include <std_srvs/_____>
-// TODO 2.2.3 补全头文件
+// 2.2.2 补全头文件
+// #include <std_srvs/>
+// 2.2.3 补全头文件
 // #include <___________________>
 
 
@@ -37,7 +37,7 @@
 #define MACRO_CLEAR_COST_MAP_SRV        "/move_base/clear_costmaps"         // 清除 Costmap 的 service
 #define MACRO_GAZEBO_MODEL_STATE_SRV    "/gazebo/get_model_state"           // 获取机器人初始位姿的 topic
 
-#define CONST_PI                        3.141592654f;                       // 圆周率 pi
+const double CONST_PI =                      3.141592654;                       // 圆周率 pi
 
 /* ========================================== 程序正文 =========================================== */
 
@@ -55,7 +55,7 @@ public:
         : ExperNodeBase(nArgc, ppcArgv, pcNodeName)
     {
         // TODO 2.2.1 初始化发布器
-        // mPubInitPose  = mupNodeHandle->advertise<____>(MACRO_INIT_POSE_TOPIC, 1);
+        mPubInitPose  = mupNodeHandle->advertise<geometry_msgs::PoseWithCovarianceStamped>(MACRO_INIT_POSE_TOPIC, 1);
 
         // TODO 2.2.2 初始化服务客户端
         // ___________ = ______________->serviceClient<__________>(MACRO_CLEAR_COST_MAP_SRV);
@@ -108,16 +108,15 @@ public:
             SetInitPoseMsg();
 
             // Step 2.2 等待 topic 具有订阅者
-            // TODO 2.2.4
-            /*
-            while(________)
-            {
-                <YOUR CODE>
-            }
-            */
             
-            // TODO 2.2.1 发布机器人初始位姿
-            // _________.________(_______);
+            while(mPubInitPose.getNumSubscribers()==0)
+            {
+                ros::Duration(1,0).sleep();//1s检测一次订阅者
+            }
+           
+            
+            // 2.2.1 发布机器人初始位姿
+            mPubInitPose.publish(mMsgInitPos);
             ROS_INFO("Initilize pose OK.");
         }
 
@@ -145,7 +144,8 @@ private:
 
     void SetInitPoseMsg(void)
     {
-        // 方便程序编写, 毕竟后面这坨名字实在太长了; 类型名长? 记不住? auto 就完了
+        // 方便程序编写, 毕竟后面这坨名字实在太长了; 类型名长? 记不住? auto 就完了 
+        // review: auto可还行 hhhhhh
         auto& msgHeader = mMsgInitPos.header;
         auto& msgPt     = mMsgInitPos.pose.pose.position;
         auto& msgQt     = mMsgInitPos.pose.pose.orientation;
@@ -158,13 +158,13 @@ private:
 
         // Step 2 设置机器人初始位姿
 
-        /* TODO 2.2.1 数格子获得坐标点
-        msgPt.x = ____;
-        msgPt.y = ____;
-        msgPt.z = ____;
+        //  2.2.1 数格子获得坐标点
+        msgPt.x = -3;
+        msgPt.y = 1;
+        msgPt.z = 0;
 
-        Heading2Quat(____, _____);
-        */
+        Heading2Quat(0, msgQt);
+        
 
         /* TODO 2.2.3 利用 Gazebo 得到的位姿数据, 修改时注意将上面 2.2.1 修改的内容注释掉
         msgPt = ___;
@@ -207,7 +207,7 @@ private:
 
     geometry_msgs::PoseWithCovarianceStamped  mMsgInitPos;              ///< 机器人初始位姿消息
 
-    std_srvs::Empty                           mSrvClrMap;               ///< 清除 Costmap 使用的服务类型
+    //std_srvs::Empty                           mSrvClrMap;               ///< 清除 Costmap 使用的服务类型
 
     // TODO 2.2.3
     // _________________________              mSrvGzbModelState;        ///< 得到的 Gzb 中机器人状态的服务类型
@@ -222,7 +222,7 @@ private:
 int main(int argc, char **argv)
 {
     // 生成 ROS 节点对象
-    InitPoseNode node(arc, argv, "init_pose");
+    InitPoseNode node(argc, argv, "init_pose");
     // 运行
     node.Run();
     return 0;

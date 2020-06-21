@@ -63,7 +63,12 @@ public:
 
         // TODO 2.3.1 设置发布器
         mPubNextGoal = mupNodeHandle->advertise<move_base_msgs::MoveBaseActionGoal>(MACRO_GOAL_POSE_TOPIC, 1);
-        // TODO 2.3.2 设置导航状态订阅器. 注意回调函数是类的成员函数, 或者是类的静态函数时, 后面应该怎么写; 方式不唯一
+       //  2.3.2 设置导航状态订阅器. 注意回调函数是类的成员函数, 或者是类的静态函数时,
+        // 类内成员函数回调函数非静态，&SetGoalNode::resCallback，this// 注意this指针
+        // 类内成员函数回调函数静态函数，&SetGoalNode::resCallback// 可以不用this
+        //别忘了ros::spinOnce(); 有回调必备
+        // 多参数传递ros::Subscriber sub = n.subscribe<std_msgs::String>("name", 10, boost::bind(&chatterCallback,_1,param1)); 利用bind的方法实现
+
         mSubNavRes = mupNodeHandle->subscribe(MACRO_RESULT_TOPIC, 1, &SetGoalNode::resCallback,this);
         isNextpoint = true;
         // 确保初始化完成, 不然可能存在第一条消息发送不出去的情况
@@ -119,7 +124,7 @@ public:
             }
             
             ros::Duration(0.5).sleep();
-            
+            //不能忘了！！！
             ros::spinOnce();
 
         }

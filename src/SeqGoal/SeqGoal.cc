@@ -190,6 +190,7 @@ private:
         std::stringstream ss;
         ss << "my_goal_" << nCnt << "_" << timeStamp.sec << "." << timeStamp.nsec;
         // 估计是一个hash表，重名的话只保留第一个,发出来的新的不起作用
+        //为空的话会自动发布一个新名字
         msgGoalID.id = ss.str(); // 估计是一个hash表，重名的话只保留第一个,发出来的新的不起作用
         ROS_DEBUG_STREAM("Goal Id: " << ss.str());
         Heading2Quat(dYawDeg, msgQt);
@@ -225,6 +226,7 @@ private:
     {
         std::string strDummy;
         std::stringstream ss;
+        //这么处理后能够实现前面0-任意行注释 TODO路径点前也这么调用，这样就可以随意佳注释了
         do
         {
             getline(mifsLandMarks,strDummy);
@@ -267,8 +269,7 @@ private:
         else
         {
             return input.substr(0,i);
-        }
-        
+        }   
     }
 
 private:

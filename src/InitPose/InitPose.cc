@@ -55,11 +55,11 @@ public:
         : ExperNodeBase(nArgc, ppcArgv, pcNodeName)
     {
         // 2.2.1 初始化发布器
+        //发布话题三步走1. 初始化advertise 2.等带订阅者 生成消息  3. Publish
         mPubInitPose  = mupNodeHandle->advertise<geometry_msgs::PoseWithCovarianceStamped>(MACRO_INIT_POSE_TOPIC, 1);
-
+        //请求服务四步走1. 初始化serviceClient 2.等待服务器就绪 生成消息  3. 调用服务 4. 处理服务返回值
         // 2.2.2 初始化服务客户端
         mClientClrMap=mupNodeHandle->serviceClient<std_srvs::Empty>(MACRO_CLEAR_COST_MAP_SRV);
-        // ___________ = ______________->serviceClient<__________>(MACRO_CLEAR_COST_MAP_SRV);
 
         //  2.2.3 gazebo获取机器人位姿的服务客户端
           mClientGzbPose = mupNodeHandle->serviceClient<gazebo_msgs::GetModelState> (MACRO_GAZEBO_MODEL_STATE_SRV);
@@ -135,8 +135,10 @@ public:
             //mClientClrMap=mupNodeHandle->serviceClient<std_srvs::Empty>(MACRO_CLEAR_COST_MAP_SRV);
             // Step 3.2 等待服务有效
             // TODO 2.2.4
-            // <YOUR CODE>
-
+            if(mClientClrMap.waitForExistence(ros::Duration(60))==false)
+            {
+                ROS_ERROR("Costmap server didn't appear");
+            }
             // Step 3.3 清除地图
             // TODO 2.2.2 调用服务
             while(!mClientClrMap.call(mSrvClrMap))

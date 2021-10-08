@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- TODO 3.2.4 编写 launch 文件 -->
+
+  <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_house.launch"/>
+  <!-- <include file="$(find turtlebot3_slam)/launch/turtlebot3_slam.launch"> -->
+    <!-- <arg name="slam_methods" value="karto"/> -->
+  <!-- </include> -->
+  <!-- <node pkg="octo_mapping" type="image_base" name="image_base" launch-prefix="xterm -e"> -->
+  <node pkg="octo_mapping" type="image_base" name="image_base" launch-prefix="gnome-terminal -e">
+    <param name="scale_factor_inv" value="0.5" />
+  </node>
+  <node pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" name="turtlebot3_teleop_key" />
+</launch>

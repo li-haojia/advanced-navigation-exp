@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
-project(advanced_navi)
+project(octo_mapping)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+
+LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -10,25 +12,46 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   sensor_msgs
   gazebo_msgs
+  cv_bridge
+  image_transport
+  pcl_ros
+  tf
+  octomap_msgs
+  octomap_ros
 )
 
 catkin_package(
 CATKIN_DEPENDS message_runtime
 )
 
+find_package(OpenCV REQUIRED MODULE)
+
+find_package(PCL REQUIRED QUIET)
+
+find_package(octomap REQUIRED )
+# 默认在ROS的搜索目录中
+# message(STATUS "==> octomap include dir: " ${octomap_INCLUDE_DIRS})
+# message(STATUS "==> octomap lib dir: " ${octomap_INCLUDE_DIRS})
+
+
 include_directories(
   ${CMAKE_CURRENT_LIST_DIR}/include
+  ${PCL_INCLUDE_DIRS}
+  ${OpenCV_INLCUDE_DIR}
   ${catkin_INCLUDE_DIRS}
+  ${OCTOMAP_INCLUDE_DIRS}
 )
 
-# TODO 进行实验 2.2 时取消注释
-add_executable(init_pose ${CMAKE_CURRENT_LIST_DIR}/src/InitPose/InitPose.cc)
-target_link_libraries(init_pose ${catkin_LIBRARIES})
+## Add link directories
+link_directories(
+  ${PCL_LIBRARY_DIRS}
+)
 
-# TODO 进行实验 2.3 时取消注释
-# add_executable(set_goal ${CMAKE_CURRENT_LIST_DIR}/src/SetGoal/SetGoal.cc)
-# target_link_libraries(set_goal ${catkin_LIBRARIES})
+# add_executable(image_base ${CMAKE_CURRENT_LIST_DIR}/src/ImageBase/ImageBase.cc)
+# target_link_libraries(image_base ${catkin_LIBRARIES} ${OpenCV_LIBS} )
 
-# TODO 进行实验 2.4 时取消注释
-add_executable(sequence_goal ${CMAKE_CURRENT_LIST_DIR}/src/SeqGoal/SeqGoal.cc)
-target_link_libraries(sequence_goal ${catkin_LIBRARIES})
+add_executable(point_cloud_map ${CMAKE_CURRENT_LIST_DIR}/src/PointsCloudMap/PointsCloudMap.cc)
+target_link_libraries(point_cloud_map ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES})
+
+add_executable(octo_map ${CMAKE_CURRENT_LIST_DIR}/src/OctoMap/OctoMap.cc)
+target_link_libraries(octo_map ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES} octomap)
